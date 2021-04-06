@@ -1,0 +1,66 @@
+version: "3"
+services:
+  covid-postgres-service:
+    image: zldev/covid-postgres:0.0.1
+    restart: always
+    container_name: covid-postgres
+    volumes:
+      - /opt/volumes/covid/postgresql:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+
+  covid-keycloak-service:
+    depends_on:
+      - covid-postgres-service
+    image: zldev/covid-keycloak:0.0.1
+    restart: always
+    container_name: covid-keycloak
+    environment:
+      JDBC_PARAM: connectionTimeout=30
+      DB_VENDOR: postgres
+      DB_ADDR: covid-postgres-service
+      DB_PORT: 5432
+      DB_DATABASE: keycloak
+      DB_USER: root
+      DB_PASSWORD: postgres
+      DB_SCHEMA: public
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+    ports:
+      - "8082:8080"
+    volumes:
+    - /opt/volumes/covid/keycloak/:/opt/jboss/keycloak/
+
+  mysql-service:
+    image: zldev/mysql:1.0.0-alpha
+    restart: always
+    container_name: covid-mysql
+    volumes:
+    - /opt/volumes/covid/mysql:/var/lib/mysql/
+    environment:
+      MYSQL_USER: root
+      MYSQL_ROOT_PASSWORD: mysql
+    ports:
+    - "3308:3306"
+
+  covid-aui-service:
+    image: zldev/c19rtr_aui:0.0.1
+    restart: always
+    container_name: covid-aui
+    ports:
+    - "8084:80"
+    volumes:
+    - /opt/volumes/covid/aui/:/usr/share/nginx/html
+
+  covid-api-service:
+    image: zldev/covid-api:0.0.1
+    restart: always
+    container_name: covid-api
+    volumes:
+    - /opt/volumes/covid/config:/opt/app/config
+    ports:
+    - "9001:9001"
